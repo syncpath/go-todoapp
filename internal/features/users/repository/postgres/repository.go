@@ -13,4 +13,3 @@ func NewUsersRepository(
 		pool: pool,
 	}
 }
-

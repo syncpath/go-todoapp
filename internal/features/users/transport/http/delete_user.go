@@ -5,7 +5,7 @@ import (
 
 	"github.com/syncpath/go-todoapp/internal/core/logger"
 	core_http_response "github.com/syncpath/go-todoapp/internal/core/transport/http/response"
-	core_http_utils "github.com/syncpath/go-todoapp/internal/core/transport/utils"
+	core_http_request "github.com/syncpath/go-todoapp/internal/core/transport/request"
 )
 
 func (h *UsersHTTPHandler) DeleteUser(rw http.ResponseWriter, r *http.Request) {
@@ -13,7 +13,7 @@ func (h *UsersHTTPHandler) DeleteUser(rw http.ResponseWriter, r *http.Request) {
 	log := logger.FromContext(ctx)
 	responseHandler := core_http_response.NewHTTPResponseHandler(log, rw)
 
-	userID, err := core_http_utils.GetIntPathValue(r, "id")
+	userID, err := core_http_request.GetIntPathValue(r, "id")
 	if err != nil {
 		responseHandler.ErrorResponse(
 			err,

@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/syncpath/go-todoapp/internal/core/logger"
-	core_postgres_pool "github.com/syncpath/go-todoapp/internal/core/repository/postgres/pool"
+	core_pgx_pool "github.com/syncpath/go-todoapp/internal/core/repository/postgres/pool/pgx"
 	core_http_middlware "github.com/syncpath/go-todoapp/internal/core/transport/http/middleware"
 	core_http_server "github.com/syncpath/go-todoapp/internal/core/transport/http/server"
 	users_postgres_repository "github.com/syncpath/go-todoapp/internal/features/users/repository/postgres"
@@ -35,9 +35,9 @@ func main() {
 	defer logger.Close()
 
 	logger.Debug("initializing postgres connection pool")
-	pool, err := core_postgres_pool.NewConnectionPool(
+	pool, err := core_pgx_pool.NewPool(
 		ctx,
-		core_postgres_pool.NewConfigMust(),
+		core_pgx_pool.NewConfigMust(),
 	)
 	if err != nil {
 		logger.Fatal("failed to init postgres connection pool", zap.Error(err))
@@ -55,13 +55,20 @@ func main() {
 		logger,
 		core_http_middlware.RequestID(),
 		core_http_middlware.Logger(logger),
-		core_http_middlware.Panic(),
 		core_http_middlware.Trace(),
+		core_http_middlware.Panic(),
 	)
 
-	apiVersionRouter := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
-	apiVersionRouter.RegisterRoutes(usersTransportHTTP.Routes()...)
-	httpServer.RegisterAPIRouters(apiVersionRouter)
+	apiVersionRouterV1 := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
+	apiVersionRouterV1.RegisterRoutes(usersTransportHTTP.Routes()...)
+
+	// apiVersionRouterV2 := core_http_server.NewAPIVersionRouter(
+	// 	core_http_server.ApiVersion2,
+	// 	core_http_middlware.Dummy("lolll"),
+	// )
+	// apiVersionRouterV2.RegisterRoutes(usersTransportHTTP.Routes()...)
+
+	httpServer.RegisterAPIRouters(apiVersionRouterV1)
 
 	if err := httpServer.Run(ctx); err != nil {
 		logger.Error("HTTP server run error", zap.Error(err))
